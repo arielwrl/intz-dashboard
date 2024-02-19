@@ -8,6 +8,7 @@ ariel@oapd
 from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
 import dash_bootstrap_components as dbc
+import dash_daq as daq
 import numpy as np
 import pandas as pd
 import plotly.io as pio
@@ -32,13 +33,13 @@ controls = dbc.Card(
         html.Div(
             [
                 html.H4("Select Galaxy:"),
-                dcc.Dropdown(id="dropdown", options=sample_all['ID'], value="A370_01", clearable=False),
+                dcc.Dropdown(id="dropdown", options=sample_all['ID'], value="A2744_01", clearable=False),
             ]
         ),
         html.Div(
-            [
-                dbc.Label("Box Filter Width"),
-                dcc.Slider(1, 20, 1, marks={1: '1', 5: '5', 10: '10', 15: '15', 20: '20'}, value=1, id='width_slider'),
+            [   html.Div('Box Filter:'),
+                dcc.RadioItems(['On', 'Off'], 'Off',
+                               inline=True, id='box_filter')
             ]
         ),
         html.Div(
@@ -69,18 +70,12 @@ app.layout = dbc.Container(
                 dbc.Col(controls, md=4),
                 dbc.Col(spectra, md=8),
             ],
-            align="top",
+            align="top left",
         ),
     ],
     fluid=True,
 )
 
-def box_filter(wl_in, flux_in, box_width=3):
-
-    wl_out = np.array([np.mean(wl_in[i:i+box_width]) for i in range(len(wl_in)-box_width)])
-    flux_out = np.array([np.mean(flux_in[i:i + box_width]) for i in range(len(flux_in) - box_width)])
-
-    return wl_out, flux_out
 
 @app.callback(
     Output("data_summary_title", "children"),
@@ -108,32 +103,29 @@ def get_galaxy_table(galaxy):
 @app.callback(
     Output("observed_spectrum", "figure"),
     Input("dropdown", "value"),
-    Input("width_slider", "value"),
+    Input("box_filter", "value"),
 )
 
 
-def plot_integrated_spectra(galaxy, box_width):
+def plot_integrated_spectra(galaxy, box_filter):
+
+    if box_filter == 'On':
+        box_filter = True
+    else:
+        box_filter = False
 
     galaxy_index = np.argwhere(sample_all['ID'] == galaxy)[0][0]
 
     redshift = sample_all['z'][galaxy_index]
 
-    file_name = galaxy + '.csv'
+    if box_filter:
+        file_name = galaxy + '_filtered.csv'
+    else:
+        file_name = galaxy + '.csv'
 
     spectra = pd.read_csv(spectra_dir / file_name)
 
-    wl_plot, flux_plot15 = box_filter(spectra['Wavelength'][spectra['Contour Limit'] == 1.5], spectra['Flux'][spectra['Contour Limit'] == 1.5], box_width)
-    flux_plot3 = box_filter(spectra['Wavelength'][spectra['Contour Limit'] == 3], spectra['Flux'][spectra['Contour Limit'] == 3], box_width)[1]
-    flux_plot5 = box_filter(spectra['Wavelength'][spectra['Contour Limit'] == 5], spectra['Flux'][spectra['Contour Limit'] == 5], box_width)[1]
-
-    labels = [np.full_like(wl_plot, '1.5'), np.full_like(wl_plot, '3'), np.full_like(wl_plot, '5')]
-    labels = np.concatenate(labels)
-    wl_all = np.concatenate([wl_plot, wl_plot, wl_plot])
-    flux_all = np.concatenate([flux_plot15, flux_plot3, flux_plot5])
-
-    plot_df = pd.DataFrame({'Wavelength': wl_all, 'Flux': flux_all, 'Contour Limit': labels})
-
-    fig = px.line(data_frame=plot_df,
+    fig = px.line(data_frame=spectra,
                   x='Wavelength',
                   y='Flux',
                   color='Contour Limit',
@@ -162,32 +154,29 @@ def plot_integrated_spectra(galaxy, box_width):
 @app.callback(
     Output("restframe_spectrum", "figure"),
     Input("dropdown", "value"),
-    Input("width_slider", "value"),
+    Input("box_filter", "value"),
 )
 
 
-def plot_integrated_spectra_restframe(galaxy, box_width):
+def plot_integrated_spectra_restframe(galaxy, box_filter):
+
+    if box_filter == 'On':
+        box_filter = True
+    else:
+        box_filter = False
 
     galaxy_index = np.argwhere(sample_all['ID'] == galaxy)[0][0]
 
     redshift = sample_all['z'][galaxy_index]
 
-    file_name = galaxy + '_restframe.csv'
+    if box_filter:
+        file_name = galaxy + '_restframe_filtered.csv'
+    else:
+        file_name = galaxy + '_restframe.csv'
 
     spectra = pd.read_csv(spectra_dir / file_name)
 
-    wl_plot, flux_plot15 = box_filter(spectra['Wavelength'][spectra['Contour Limit'] == 1.5], spectra['Flux'][spectra['Contour Limit'] == 1.5], box_width)
-    flux_plot3 = box_filter(spectra['Wavelength'][spectra['Contour Limit'] == 3], spectra['Flux'][spectra['Contour Limit'] == 3], box_width)[1]
-    flux_plot5 = box_filter(spectra['Wavelength'][spectra['Contour Limit'] == 5], spectra['Flux'][spectra['Contour Limit'] == 5], box_width)[1]
-
-    labels = [np.full_like(wl_plot, '1.5'), np.full_like(wl_plot, '3'), np.full_like(wl_plot, '5')]
-    labels = np.concatenate(labels)
-    wl_all = np.concatenate([wl_plot, wl_plot, wl_plot])
-    flux_all = np.concatenate([flux_plot15, flux_plot3, flux_plot5])
-
-    plot_df = pd.DataFrame({'Wavelength': wl_all, 'Flux': flux_all, 'Contour Limit': labels})
-
-    fig = px.line(data_frame=plot_df,
+    fig = px.line(data_frame=spectra,
                   x='Wavelength',
                   y='Flux',
                   color='Contour Limit',
