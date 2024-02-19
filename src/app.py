@@ -18,6 +18,7 @@ sample_all = pd.read_csv(data_dir / 'all_galaxy_sample.csv')
 reference_lines = {'OII': 3727, 'H\u03B4': 4101, 'H\u03B2': 4861, 'OIII': 5007, 'H\u03B1': 6563}
 
 app = Dash(external_stylesheets=[dbc.themes.LUX])
+server = app.server
 
 controls = dbc.Card(
     [
