@@ -8,7 +8,6 @@ ariel@oapd
 from dash import Dash, dcc, html, Input, Output
 import plotly.express as px
 import dash_bootstrap_components as dbc
-import dash_daq as daq
 import numpy as np
 import pandas as pd
 import plotly.io as pio
