@@ -22,7 +22,7 @@ spectra_dir = root_dir / 'data/dashboard_data/'
 
 sample_all = pd.read_csv(data_dir / 'all_galaxy_sample.csv')
 
-reference_lines = {'OII': 3727, 'H\u03B4': 4101, 'H\u03B2': 4861, 'OIII': 5007, 'H\u03B1': 6563}
+reference_lines = {'OII': 3727, 'H\u03B7': 3836, 'H\u03B3': 4341, 'H\u03B4': 4101, 'H\u03B2': 4861, 'OIII': 5007, 'H\u03B1': 6563}
 
 app = Dash(external_stylesheets=[dbc.themes.LUX])
 server = app.server
